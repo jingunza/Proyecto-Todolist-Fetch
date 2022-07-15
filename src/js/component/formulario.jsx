@@ -11,6 +11,8 @@ const Formulario = (props) => {
       onKeyDown={props.insertar}
       type="text"
       placeholder="What needs to be done?"
+      value ={props.value}
+      onChange={props.setValue}
       />
     </div>
   )
