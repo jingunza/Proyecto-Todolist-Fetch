@@ -4,6 +4,7 @@ import React, {useEffect, useState} from "react";
 import '../../styles/App.css';
 import { TiDeleteOutline } from "react-icons/ti";
 
+
 /* --------------- COMPONENTE PRINCIPAL DE LA APLICACION--------------------------------------------------------------- */
 
 const App = () => {
@@ -16,68 +17,31 @@ const App = () => {
   const [currentUser, setCurrentUser] = useState('');
   const [inputUser, setInputUser] = useState('');
 
+  const url = 'https://assets.breatheco.de/apis/fake/todos/user/'+currentUser;
+
   const [estiloInputTarea, setEstiloInputTarea] = useState('hidden');
 
   /* --------------- FUNCIONES Y METODOS DE FETCH API------------------------------- */
 
-  // useEffect(()=>{  //pide ingresar User
-  //   alert('ingresa tu usuario en el pie de pagina')
-  // },[]);
+  useEffect(()=>{  //pide ingresar User
+    alert('ingresa tu usuario en el pie de pagina')
+  },[]);
 
-  //     // insertar usuario nuevo---------------------
-  // const insertarUser = (e) => { //esta funcion se ejecuta en onKeyDown al dar Enter
-  //   if(e.target.value.trim().length!==0 && e.key==='Enter'){
-  //     setCurrentUser(e.target.value);
-  //     setInputUser(''); //el value de este elemento input lee a la variable inputUser
-  //     setEstiloInputTarea('visible');
-  //   }
-  // };
+  useEffect(()=>{  //pide ingresar User
+    if(currentUser.length>0){
+      get();
+    }
+  },[currentUser]);
 
-  // useEffect(()=>{  
-  //   fetch(`https://assets.breatheco.de/apis/fake/todos/user/${currentUser}`)
-  //     .then((response)=> {
-  //       if (!response.ok) {
-  //         throw Error(response.statusText);
-  //       }
-  //       return response.json();
-  //     })
-  //     .then((responseAsJson)=> {
-  //       setRegistro(responseAsJson);
-  //     })
-  //     .catch((error)=> {
-  //         console.log('Looks like there was a problem: \n', error);
-  //     });
-  // },[insertarUser]);
 
-  //     // get inicial de la aplicacion -------------
-  // const getInit = (apendice) =>{
-  //   fetch('https://assets.breatheco.de/apis/fake/todos/user/'+ apendice)
-  //     .then((response)=> {
-  //       if (!response.ok) {
-  //         post(apendice);  // mas abajo se define post: se ejecuta solo cuando falla el get 
-  //         throw Error(response.statusText);
-  //       }
-  //       return response.json();
-  //     })
-  //     .then((responseAsJson)=> {
-  //       setRegistro(responseAsJson);
-  //     })
-  //     .catch((error)=> {
-  //         console.log('Looks like there was a problem: \n', error);
-  //     });
-  // };
-
-  //     // post que se ejecuta si falla el get inicial ----------------
-  // const post = (apendice) =>{ //solo se ejecuta dentro del get si este falla
-  //   fetch('https://assets.breatheco.de/apis/fake/todos/user/'+ apendice, {
-  //     method: "POST",
-  //     body: JSON.stringify([{"label":"sample task", "done": false }]),
-  //     headers: {"Content-type": "application/json; charset=UTF-8"}
-  //   })
-  //   .then(response =>response.json()) 
-  //   .then(json => console.log(json))
-  //   .catch(err => console.log(err));
-  // };
+      // insertar usuario nuevo---------------------
+  const insertarUser = (e) => { //esta funcion se ejecuta en onKeyDown al dar Enter
+    if(e.target.value.trim().length!==0 && e.key==='Enter'){
+      setCurrentUser(e.target.value);
+      setInputUser(''); //el value de este elemento input lee a la variable inputUser
+      setEstiloInputTarea('visible');
+    }
+  };
 
       // funcion insertar nueva tarea y accesorios -------------------
   let currentTime = new Date();
@@ -86,21 +50,31 @@ const App = () => {
   let segundo = currentTime.getSeconds().toString();
   const insertarTarea = (e) =>{ //esto se ejecuta en el onKeyDown
     if(e.target.value.trim().length!==0 && e.key==='Enter'){
-      setRegistro([...registro, {label: e.target.value, done: false}]); //esto SOLO funciona con DECONSTRUCCION, NO USAR PUSH
+      let aux = [...registro, {label: e.target.value, done: false}];
+      setRegistro(aux); //esto SOLO funciona con DECONSTRUCCION, NO USAR PUSH
       setValue('');
-      put(currentUser);
+      put(aux);
       };
   };
 
       // funcion eliminar tarea y accesorios -------------------
   const eliminarTarea = (item) => {
-    setRegistro(registro.filter((elem)=>elem!==item)); //referencio al id del elemento del array que voya a eliminar dentro del map
-    put(currentUser);
+    if(registro.length<2){
+      deleteApi();
+      setRegistro([]);
+      setCurrentUser('');
+      setEstiloInputTarea('hidden');
+      
+    } else {
+    let aux = registro.filter((elem)=>elem!==item);
+    setRegistro(aux); //referencio al id del elemento del array que voya a eliminar dentro del map
+    put(aux);
+    }
   };
 
       // get recurrente sin post incluido ------------------------------
   const get = () =>{ // este get se usara despues de cada put
-    fetch('https://assets.breatheco.de/apis/fake/todos/user/joseingunza')
+    fetch(url)
       .then((response)=> {
         if (!response.ok) {
           throw Error(response.statusText);
@@ -109,6 +83,32 @@ const App = () => {
       })
       .then((responseAsJson)=> {
         setRegistro(responseAsJson);
+        console.log('get realizado!')
+      })
+      .catch((error)=> {
+          post();
+          console.log('Looks like there was a problem: \n', error);
+      });
+  };
+
+  const post = () =>{ // este get se usara despues de cada put
+    fetch(url, {
+      method: "POST",
+      body: JSON.stringify([]),
+      headers: {
+        "Content-Type": "application/json"
+      }
+    } )
+      .then((response)=> {
+        if (!response.ok) {
+          throw Error(response.statusText);
+        }
+        return response.json();
+      })
+      .then((responseAsJson)=> {
+        setRegistro(responseAsJson);
+        get();
+        console.log('POST realizado!')
       })
       .catch((error)=> {
           console.log('Looks like there was a problem: \n', error);
@@ -116,17 +116,18 @@ const App = () => {
   };
 
       // put para actualizar informacion en la API ---------------------
-  const put = (apendice) => {
-    fetch('https://assets.breatheco.de/apis/fake/todos/user/'+ apendice, {
+  const put = (newData) => {
+    fetch(url, {
       method: "PUT",
-      body: JSON.stringify(registro),
+      body: JSON.stringify(newData),
       headers: {
         "Content-Type": "application/json"
       }
     })
       .then(response => {
         if (response.ok)  {
-          console.log(response.ok);
+          get();
+          console.log('PUT REALIZADO');
         }
       })
     .catch(error => {
@@ -134,11 +135,31 @@ const App = () => {
     });
   };
 
+  const deleteApi = () => {
+    fetch(url, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json"
+      }
+    } )
+      .then((response)=> {
+        if (!response.ok) {
+          throw Error(response.statusText);
+        }
+        console.log('aPI ELIMINADA');
+        alert('ingresa tu usuario en el pie de pagina');
+        return response.json();
+      })
+      .catch((error)=> {
+          console.log('Looks like there was a problem: \n', error);
+      });
+  }
+
   /* --------------------------RENDERIZACION------------------------------------------ */
 
 	return (
 		<div className="body-hijo row justify-content-center">
-			<div className="cuaderno col-10 col-sm-8 col-md-6 col-lg-5 pt-5 pb-3 px-0 mt-5">
+			<div className="cuaderno col-10 col-sm-8 col-md-6 col-lg-5 pt-5 pb-2 px-0 mt-5">
 				<h1 className="titulo-lista text-center mt-0 mb-4">todos</h1>
         <div className="zona-rayada">
           
@@ -162,7 +183,7 @@ const App = () => {
                   No hay tareas, añadir tareas
                 </div>
               </div>
-              : registro.map((item)=>
+              : Array.isArray(registro)? registro.map((item)=> // ATENCION TRUCO
               <div key={item.label+hora+minuto+segundo} className="lista-elemento d-flex align-items-center justify-content-between">
                 <div className="lista-texto px-3 px-lg-5" id={item.label+hora+minuto+segundo}>
                   {item.label}
@@ -173,12 +194,12 @@ const App = () => {
                 >
                   <TiDeleteOutline className="icono-eliminar" />
                 </div>
-              </div>)}
+              </div>) : ''}
           </div>  
 
-					<div className="pie-pagina d-flex justify-content-between pt-4 pb-2 px-3">
-              <div className="col-3">{registro.length} items left</div>
-              <div className="contenedor-user col-6">
+					<div className="pie-pagina d-flex justify-content-between pt-3 pb-2 px-3">
+              <div className="col-2">{registro.length} items left</div>
+              <div className="contenedor-user col-4">
                 <input
                   onKeyDown={insertarUser}
                   value ={inputUser} //input controlado de User
@@ -190,6 +211,18 @@ const App = () => {
                 />
               </div>
               <div className="col-3 text-end">{(currentUser!=='')? 'user: '+currentUser : ''}</div>
+              <div className="col-3 text-center">
+                <button
+                  onClick={()=>{
+                    setRegistro('');
+                    setCurrentUser('');
+                    deleteApi();
+                  }}
+                  className="btn btn-danger"
+                >
+                  Eliminar Lista
+                </button>
+              </div>
           </div>
 
         </div>
